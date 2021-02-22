@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kayenta
+  labels:
+    app: kayenta
+spec:
+  ports:
+    - port: 18630
+      targetPort: 18630
+      protocol: TCP
+      name: http
+  selector:
+    app: kayenta
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kayenta
+  labels:
+    app: kayenta
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kayenta
+  template:
+    metadata:
+      labels:
+        app: kayenta
+    spec:
+      containers:
+      - name: kayenta
+        image: armory/kayenta:2.24.10
+        ports:
+        - containerPort: 8090
+        env:
+        - name: SPRING_CONFIG_LOCATION
+          value: "/opt/kayenta/"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        volumeMounts:
+        - name: config
+          mountPath: /opt/kayenta
+      volumes:
+      - name: postgres-gpvapi-secret
+        configMap:
+          name: kayenta-config
