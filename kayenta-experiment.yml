@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: guestbook
+  labels:
+    app: guestbook
+spec:
+  replicas: 5
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: guestbook
+  template:
+    metadata:
+      labels:
+        app: guestbook
+    spec:
+      containers:
+        - name: canary-demo
+          image: argoproj/rollouts-demo:green
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: 32Mi
+              cpu: 5m
+  strategy:
+    canary:
+      steps:
+        - experiment:
+            duration: 1h
+            templates:
+              - name: baseline
+                specRef: stable
+              - name: canary
+                specRef: canary
+            analyses:
+              - name: my-analysis
+                templateName: mann-whitney
+                args:
+                  - name: baseline-hash
+                    value: "{{templates.baseline.podTemplateHash}}"
+                  - name: canary-hash
+                    value: "{{templates.canary.podTemplateHash}}"

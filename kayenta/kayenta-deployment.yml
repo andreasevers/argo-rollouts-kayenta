@@ -6,12 +6,13 @@ metadata:
     app: kayenta
 spec:
   ports:
-    - port: 18630
-      targetPort: 18630
+    - port: 8090
+      targetPort: 8090
       protocol: TCP
       name: http
   selector:
     app: kayenta
+  type: LoadBalancer
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,16 +36,20 @@ spec:
         ports:
         - containerPort: 8090
         env:
-        - name: SPRING_CONFIG_LOCATION
-          value: "/opt/kayenta/"
+        - name: KAYENTA_OPTS
+          value: "-Dspring.config.location=file:/opt/kayenta/config/my-config/kayenta.yml"
+        - name: SPRING_APPLICATION_NAME
+          value: "kayenta"
+        - name: SPRING_CONFIG_NAME
+          value: "kayenta"
         resources:
           requests:
             cpu: 250m
             memory: 512Mi
         volumeMounts:
         - name: config
-          mountPath: /opt/kayenta
+          mountPath: /opt/kayenta/config/my-config
       volumes:
-      - name: postgres-gpvapi-secret
+      - name: config
         configMap:
           name: kayenta-config

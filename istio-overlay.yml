@@ -1,0 +1,10 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  values:
+    sidecarInjectorWebhook:
+      neverInjectSelector:
+        # kube-prometheus-stack
+        ## Admission Webhook jobs do not terminate as expected with istio-proxy
+        - matchExpressions:
+            - {key: app, operator: In, values: [kube-prometheus-stack-admission-create,kube-prometheus-stack-admission-patch]}

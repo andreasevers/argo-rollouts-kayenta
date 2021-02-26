@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: mann-whitney
+spec:
+  args:
+    #    - name: start-time
+    #    - name: end-time
+    - name: stable-hash
+    - name: canary-hash
+  metrics:
+    - name: mann-whitney
+      provider:
+        kayenta:
+          address: http://kayenta.argo-rollouts.svc.cluster.local:8090
+          application: guestbook
+          canaryConfigName: my-test
+          storageAccountName: in-memory-store
+          configurationAccountName: in-memory-store
+          metricsAccountName: my-prometheus-account
+          interval: 3600
+          count: 3
+          threshold:
+            pass: 90
+            marginal: 75
+          scopes:
+            - name: default
+              controlScope:
+                scope: app=guestbook and rollouts-pod-template-hash={{args.stable-hash}}
+                step: 60
+                start: 2021-02-23T14:09:00Z
+                end: 2021-02-23T14:10:00Z
+                region: default
+              experimentScope:
+                scope: app=guestbook and rollouts-pod-template-hash={{args.canary-hash}}
+                step: 60
+                start: 2021-02-23T13:17:00Z
+                end: 2021-02-23T13:18:00Z
+                region: default
